@@ -1,0 +1,142 @@
+﻿@{
+    ViewData["Title"] = "Game detail Page";
+}
+
+@model GameDetailViewModel
+@inject UserManager<WebUser> UserManager
+
+@{
+    var userId = UserManager.GetUserId(User);
+}
+
+<div class="container">
+        <a asp-controller="game" asp-action="index" class="btn btn-primary mt-3"><i class="las la-arrow-left"></i> Back</a>
+        <div class="row">
+            <div class="col-md-1"></div>
+            <div class="col-md-10 d-flex justify-content-center">
+            <img src="~/@Model.Game.ImagePath" id="detail-img" class="shadov detail-img" alt="">
+            </div>
+            <div class="col-md-1"></div>
+        </div>
+        <div style="width: 90%; margin: 0 auto;">
+          <div style="margin: 40px 50px 40px 0px;">
+            <input type="hidden" id="gameId" value="@Model.GameId">
+            <h2 id="name">@Model.Game.Name</h2>
+            <div class="d-flex justify-content-between">
+                <h3>$ <span id="price" class="card-title">@Model.Game.Price</span></h3>
+                <h3 ></h3>
+                <a onclick="addbtnClick()" class="btn btn-primary"> Add to cart <i class="las la-shopping-cart" style="font-size:22px;"></i></a>
+            </div>
+            <hr>
+            <div class="categories">
+                @foreach (var category in Model.Game.Categories)
+                {
+                    <span class="badgee">@category.Name</span>
+                }
+            </div>
+            <p class="mt-5">@Model.Game.Description</p>
+            <form method="post" asp-controller="game" asp-action="addcomment">
+                <div class="mb-3">
+                    <input type="hidden" value="@Model.Game.Id" asp-for="GameId"/>
+                    <input type="hidden" value="@userId" asp-for="UserId" />
+                    <label class="form-label">Leave comment</label>
+                    <textarea asp-for="Text" minlength="3" maxlength="600" class="form-control" rows="3"></textarea>
+                    @{
+                        string error = (string)ViewData["Error"];
+                    }
+                    <span class="text-danger">@error</span>
+                </div>
+                <button type="submit" class="btn btn-success">Save</button>
+            </form>
+
+
+
+            @if (Model.Comments.Any() || Model.DeletedComments != null)
+            {
+                <h4 class="mt-3">All comments</h4>
+                <hr>
+                <div class="my-5">
+                    @if (Model.DeletedComments != null)
+                    {
+                        foreach (var deletedComment in Model.DeletedComments)
+                        {
+                            <div class="comment-user mt-3 d-flex justify-content-start text-secondary">
+                                <img src="~/@deletedComment.User.AvatarPath" alt="">
+                                <div>
+                                    <p class="d-inline p1">@deletedComment.User.FirstName @deletedComment.User.LastName</p> <br>
+                                    @{
+                                        string edited1 = "";
+                                        if (deletedComment.IsEdited == true)
+                                        {
+                                            edited1 = "Edited ";
+                                        }
+                                    }
+                                    <p class="d-inline p2"><span class="text-secondary">@edited1</span> @deletedComment.CommentedTime</p>
+                                </div>
+                            </div>
+                            <p class="mt-2">@deletedComment.Body</p>
+                            <a asp-controller="comment" asp-action="restore" asp-route-commentId="@deletedComment.Id" asp-route-gameId="@deletedComment.GameId" asp-route-userId="@userId" class="text-secondary">Restore</a>
+                            <a asp-controller="comment" asp-action="delete" asp-route-commentId="@deletedComment.Id" asp-route-gameId="@deletedComment.GameId" asp-route-userId="@userId"
+                   onclick="return confirm('Are you sure permanently delete your comment?');" class="text-danger">Delete</a>
+                        }
+                    }
+                    @foreach (var item in Model.Comments)
+                    {
+
+                        <div class="comment-user mt-3 d-flex justify-content-start">
+                            <img src="~/@item.User.AvatarPath" alt="">
+                            <div>
+                                <p class="d-inline p1">@item.User.FirstName @item.User.LastName</p> <br>
+                                @{
+                                    string edited = "";
+                                    if (item.IsEdited == true)
+                                    {
+                                        edited = "Edited ";
+                                    }
+                                }
+                                <p class="d-inline p2"><span class="text-secondary">@edited</span> @item.CommentedTime</p>
+                            </div>
+                        </div>
+                        <p class="mt-2">@item.Body</p>
+                        <a asp-controller="comment" asp-action="add" asp-route-gameId="@Model.Game.Id" asp-route-userId="@userId" asp-route-commentId="@item.Id" class="text-primary">Reply</a>
+                        @if (item.User.Id == userId)
+                        {
+                            <a asp-controller="comment" asp-action="edit" asp-route-text="@item.Body" asp-route-commentId="@item.Id" asp-route-gameId="@Model.Game.Id" asp-route-userId="@userId" class="text-success">Edit</a>
+                            <a asp-controller="game" asp-action="deletecomment" asp-route-commentId="@item.Id" asp-route-gameId="@Model.Game.Id" asp-route-userId="@userId"
+                   onclick="return confirm('Are you sure delete your comment?');" class="text-danger">Delete</a>
+                        }
+
+                        @foreach (var reply in item.RepliedComments)
+                        {
+                            <div style="margin-left: 100px !important;">
+                                <div class="comment-user mt-3 d-flex justify-content-start">
+                                    <img src="~/@reply.User.AvatarPath" alt="">
+                                    <div>
+                                        <p class="d-inline p1">@reply.User.FirstName @reply.User.LastName</p> <br>
+
+                                        @{
+                                            string edited2 = "";
+                                            if (reply.IsEdited == true)
+                                            {
+                                                edited2 = "Edited ";
+                                            }
+                                        }
+                                        <p class="d-inline p2"><span class="text-secondary">@edited2</span> @reply.CommentedTime</p>
+                                    </div>
+                                </div>
+                                <p class="mt-2">@reply.Body</p>
+                                @if (reply.User.Id == userId)
+                                {
+                                    <a asp-controller="comment" asp-action="edit" asp-route-text="@reply.Body" asp-route-commentId="@reply.Id" asp-route-gameId="@Model.Game.Id" asp-route-userId="@userId" class="text-success">Edit</a>
+                                    <a asp-controller="comment" asp-action="delete" asp-route-commentId="@reply.Id" asp-route-gameId="@Model.Game.Id" asp-route-userId="@userId"
+                       onclick="return confirm('Are you sure delete your comment?');" class="text-danger">Delete</a>
+                                }
+                            </div>
+                        }
+                    }
+                </div>
+            }
+            
+        </div>
+        </div>
+    </div>

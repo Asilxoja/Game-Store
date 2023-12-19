@@ -1,0 +1,128 @@
+﻿@{
+    ViewData["Title"] = "Home Page";
+}
+
+@model GameFilterViewModel
+@inject UserManager<WebUser> UserManager
+
+@{
+    var userId = UserManager.GetUserId(User);
+}
+
+
+<form asp-controller="game" asp-action="index" class="d-flex m-3" role="search">
+    <input asp-for="Name" minlength="3" value="@Model.Name" class="form-control me-2" type="search" placeholder="Search games by name..." aria-label="Search">
+    <div class="input-group mx-3" style="width: 150px;">
+        <select asp-for="Sort" class="form-select" id="inputGroupSelect03" aria-label="Example select with button addon">
+            <option selected disabled value="0">Sort by...</option>
+            <option value="1">New</option>
+            <option value="2">Popular</option>
+            <option value="3">Free</option>
+        </select>
+    </div>
+    <button class="btn btn-primary" type="submit">Search</button>
+</form>
+<div class="m-3">
+    <h4>Game categories</h4>
+    <div class="d-flex flex-wrap align-items-md-start categories">
+        @foreach (var category in Model.Categories)
+        {
+            <div>
+                <a asp-controller="game" asp-action="category" asp-route-categoryId="@category.Id" class="btn btn-outline-primary mb-2" style="width: 120px;">
+                    @category.Name
+                </a>
+            </div>
+        }
+    </div>
+</div>
+
+<div class="row mt-3 mx-2">
+
+    @if (Model == null)
+    {
+        <h1>There is no any data yet!</h1>
+    }
+    else
+    {
+        @foreach (var game in Model.PagedGames)
+        {
+            <div class="col-md-4 p-2">
+                <div id="somee" class="card text-bg-dark">
+                    <img src="~/@game.ImagePath" class="card-img cardimg" alt="...">
+                    <div class="card-img-overlay card-div">
+                            @{
+                                var gamePrice = game.Price == 0 ? "Free" : $"{game.Price}";
+                            }
+                        <div class="d-flex justify-content-between">
+                            <h3 class="card-title" style="color: white !important;">$ @gamePrice</h3>
+                            <div class="cardt">
+                                <div class="links">
+                                    <a asp-controller="game" id="edit" asp-action="edit" asp-route-id="@game.Id"><i class="las la-edit"></i></a>
+                                    <a asp-controller="game" id="delete" asp-action="delete" asp-route-id="@game.Id"
+                               onclick="return confirm('Are you sure delete this Game?')"><i class="las la-trash"></i></a>
+                                </div>
+                            </div>
+                        </div>
+                        <a asp-controller="game" asp-action="gamedetail" asp-route-gameId="@game.Id" asp-route-userId="@userId" class="game-link">
+                            <h5 class="card-text">@game.Name</h5>
+                            <p class="card-text"><small>@string.Join(" / ", game.Categories.Select(c => c.Name))</small></p>
+                            <p style="margin-top: -20px; float: right;">@game.Sold Sold</p>
+                        </a>
+                        </div>
+                </div>
+            </div>
+        }
+    }
+
+    <nav aria-label="Page navigation example">
+        <ul class="pagination justify-content-center">
+                @* @if (Model.PagedGames.HasPrevious)
+                {
+                <li class="page-item">
+                    <a class="page-link" href="#" aria-label="Previous">
+                        <span aria-hidden="true">&laquo;</span>
+                    </a>
+                </li>
+                }
+                else
+                {
+                <li class="page-item disabled">
+                    <a class="page-link" href="#" aria-label="Previous">
+                        <span aria-hidden="true">&laquo;</span>
+                    </a>
+                </li>
+                } *@
+            @for (int i = 1; i <= Model.PagedGames.TotalPages; i++)
+            {
+                <li class="page-item"><a class="page-link" asp-controller="game" asp-action="index" asp-route-page="@i" asp-route-name="@Model.Name" asp-route-sort="@Model.Sort">@i</a></li>
+            }
+                @* @if (Model.PagedGames.HasNext)
+                {
+                <li class="page-item">
+                    <a class="page-link" href="#" aria-label="Previous">
+                        <span aria-hidden="true">&raquo;</span>
+                    </a>
+                </li>
+                }
+                else
+                {
+                <li class="page-item disabled">
+                    <a class="page-link" href="#" aria-label="Previous">
+                        <span aria-hidden="true">&raquo;</span>
+                    </a>
+                </li>
+                } *@
+        </ul>
+    </nav>
+</div>
+
+<script>
+    $(document).ready(function () {
+        $("#somee").hover(function () {
+            $(".open-close").setAttribute("style", "display:block;");
+        },
+            function () {
+                $(".open-close").setAttribute("style", "display:none;");
+            });
+    });
+</script>
